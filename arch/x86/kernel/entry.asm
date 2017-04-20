@@ -114,6 +114,15 @@ boot_pgt:
 SECTION .ktext
 align 4
 start64:
+    ; [for test only]: create pseudo hbmem
+    mov rdx, QWORD [limit]
+    sub rdx, 0x10000000
+    mov QWORD [limit], rdx
+    mov [hbmem_base], rdx
+    mov rdx, 0x10000000
+    mov [hbmem_size], rdx 
+
+
     ; reset registers to kill any stale realmode selectors
     xor eax, eax
     mov ds, eax
