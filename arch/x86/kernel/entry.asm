@@ -121,12 +121,12 @@ SECTION .ktext
 align 4
 start64:
     ; [for test only]: create pseudo hbmem
-    mov ecx, QWORD [limit]
-    sub ecx, 0x10000000
-    mov QWORD [limit], ecx
-    mov [hbmem_base], ecx
-    mov ecx, 0x10000000
-    mov [hbmem_size], ecx
+    mov rcx, QWORD [limit]
+    sub rcx, 0x10000000
+    mov QWORD [limit], rcx
+    mov [hbmem_base], rcx
+    mov rcx, 0x10000000
+    mov [hbmem_size], rcx
 
 
     ; reset registers to kill any stale realmode selectors
