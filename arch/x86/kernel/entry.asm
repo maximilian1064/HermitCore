@@ -126,7 +126,7 @@ start64:
     mov QWORD [limit], rdx
     mov [hbmem_base], rdx
     mov rdx, 0x10000000
-    mov [hbmem_size], rdx 
+    mov [hbmem_size], rdx
 
 
     ; reset registers to kill any stale realmode selectors
