@@ -92,6 +92,7 @@ int sys_rcce_fini(int session_id);
 void sys_yield(void);
 int sys_kill(tid_t dest, int signum);
 int sys_signal(signal_handler_t handler);
+ssize_t sys_hbmem_sbrk(ssize_t incr);
 
 struct ucontext;
 typedef struct ucontext ucontext_t;
@@ -131,6 +132,7 @@ int setcontext(ucontext_t *ucp);
 #define __NR_clone		27
 #define __NR_sem_cancelablewait	28
 #define __NR_get_ticks		29
+#define __NR_hbmem_sbrk     30
 
 #ifndef __KERNEL__
 inline static long

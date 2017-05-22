@@ -47,6 +47,7 @@ extern const void kernel_start;
  */
 static vma_t vma_boot = { VMA_MIN, VMA_MIN, VMA_HEAP };
 static vma_t* vma_list = &vma_boot;
+static vma_t* vma_cache = &vma_boot;
 static spinlock_irqsave_t vma_lock = SPINLOCK_IRQSAVE_INIT;
 
 int vma_init(void)
@@ -283,4 +284,39 @@ void vma_dump(void)
 	spinlock_irqsave_lock(&vma_lock);
 	print_vma(&vma_boot);
 	spinlock_irqsave_unlock(&vma_lock);
+}
+
+vma_t* find_vma(size_t viraddr)
+{
+    spinlock_irqsave_t* lock = &vma_lock;
+    vma_t* vma;
+
+    spinlock_irqsave_lock(lock);
+
+    // check the vma cache first
+    vma = vma_cache;
+
+    // search in the vma list if we have a cache miss
+    if(!(vma && viraddr >= vma->start && viraddr <= vma->end))
+    {
+        vma = vma_list;
+        while (vma) {
+            if (viraddr >= vma->start && viraddr <= vma->end) break;
+            vma = vma->next;
+        }
+
+        // return NULL if vma not found
+        if(!vma)
+            goto not_found;
+
+        // update vma cache if vma found
+        vma_cache = vma;
+    }
+
+	spinlock_irqsave_unlock(lock);
+    return vma;
+
+not_found:
+    spinlock_irqsave_unlock(lock);
+    return NULL;
 }

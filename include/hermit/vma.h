@@ -55,6 +55,8 @@ extern "C" {
 #define VMA_NO_ACCESS	(1 << 4)
 /// This VMA should be part of the userspace
 #define VMA_USER	(1 << 5)
+/// This VMA should be mapped to high-bandwidth memory
+#define VMA_HBMEM	(1 << 6)
 /// A collection of flags used for the kernel heap (kmalloc)
 #define VMA_HEAP	(VMA_READ|VMA_WRITE|VMA_CACHEABLE)
 
@@ -140,6 +142,17 @@ int vma_free(size_t start, size_t end);
 
 /** @brief Dump information about this task's VMAs into the terminal. */
 void vma_dump(void);
+
+/** @find the vma of a virtual address, used in page fault handler
+ *   for determining which type of memory the address should be
+ *   mapped to
+ *
+ * @param viraddr The virtual address to be checked
+ * @return
+ * - NULL on failure
+ * - Pointer to the vma found
+ */
+vma_t* find_vma(size_t viraddr);
 
 #ifdef __cplusplus
 }

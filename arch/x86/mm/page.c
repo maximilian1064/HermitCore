@@ -41,6 +41,7 @@
 #include <hermit/spinlock.h>
 #include <hermit/tasks.h>
 #include <hermit/logging.h>
+#include <hermit/vma.h>
 
 #include <asm/multiboot.h>
 #include <asm/irq.h>
@@ -270,7 +271,14 @@ void page_fault_handler(struct state *s)
 		 // on demand userspace heap mapping
 		viraddr &= PAGE_MASK;
 
-		size_t phyaddr = expect_zeroed_pages ? get_zeroed_page() : get_page();
+        // check if we need to map the page to high-bandwidth memory
+        vma_t* vma = find_vma(viraddr);
+        size_t phyaddr;
+        if(vma && vma->flags & VMA_HBMEM)
+            phyaddr = hbmem_get_pages(1);
+        else
+            phyaddr = expect_zeroed_pages ? get_zeroed_page() : get_page();
+
 		if (BUILTIN_EXPECT(!phyaddr, 0)) {
 			LOG_ERROR("out of memory: task = %u\n", task->id);
 			goto default_handler;
