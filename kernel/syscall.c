@@ -53,6 +53,9 @@ extern const void kernel_start;
 //TODO: don't use one big kernel lock to comminicate with all proxies
 static spinlock_irqsave_t lwip_lock = SPINLOCK_IRQSAVE_INIT;
 
+// lock for the sbrk syscalls
+static spinlock_t heap_lock = SPINLOCK_INIT;
+
 extern spinlock_irqsave_t stdio_lock;
 extern int32_t isle;
 extern int32_t possible_isles;
@@ -274,7 +277,6 @@ ssize_t sys_sbrk(ssize_t incr)
 {
 	ssize_t ret;
 	vma_t* heap = per_core(current_task)->heap;
-	static spinlock_t heap_lock = SPINLOCK_INIT;
 
 	if (BUILTIN_EXPECT(!heap, 0)) {
 		LOG_ERROR("sys_sbrk: missing heap!\n");
@@ -310,7 +312,6 @@ ssize_t sys_hbmem_sbrk(ssize_t incr)
 {
 	ssize_t ret;
 	vma_t* heap = per_core(current_task)->heap;
-	static spinlock_t heap_lock = SPINLOCK_INIT;
 
 	if (BUILTIN_EXPECT(!heap, 0)) {
 		LOG_ERROR("sys_sbrk: missing heap!\n");

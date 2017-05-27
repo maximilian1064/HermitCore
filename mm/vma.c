@@ -297,11 +297,11 @@ vma_t* find_vma(size_t viraddr)
     vma = vma_cache;
 
     // search in the vma list if we have a cache miss
-    if(!(vma && viraddr >= vma->start && viraddr <= vma->end))
+    if(!(vma && viraddr >= vma->start && viraddr < vma->end))
     {
         vma = vma_list;
         while (vma) {
-            if (viraddr >= vma->start && viraddr <= vma->end) break;
+            if (viraddr >= vma->start && viraddr < vma->end) break;
             vma = vma->next;
         }
 
