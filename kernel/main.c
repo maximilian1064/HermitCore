@@ -323,7 +323,7 @@ static int initd(void* arg)
 	struct sockaddr_in6 server, client;
 	task_t* curr_task = per_core(current_task);
 	size_t heap = HEAP_START;
-    size_t hbmem_heap = HEAP_START + HEAP_SIZE >> 1;
+    size_t hbmem_heap = HEAP_START + (HEAP_SIZE >> 1);
 	int argc, envc;
 	char** argv = NULL;
 	char **environ = NULL;

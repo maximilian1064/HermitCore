@@ -254,7 +254,8 @@ void page_fault_handler(struct state *s)
 
 	spinlock_irqsave_lock(&page_lock);
 
-	if ((task->heap) && (viraddr >= task->heap->start) && (viraddr < task->heap->end)) {
+	if ( ((task->heap) && (viraddr >= task->heap->start) && (viraddr < task->heap->end))
+         || ((task->hbmem_heap) && (viraddr >= task->hbmem_heap->start) && (viraddr < task->hbmem_heap->end)) ) {
 		size_t flags;
 		int ret;
 
@@ -270,10 +271,16 @@ void page_fault_handler(struct state *s)
 		 // on demand userspace heap mapping
 		viraddr &= PAGE_MASK;
         size_t phyaddr;
-        if( (viraddr >= HEAP_START + HEAP_SIZE>>1) && (viraddr < HEAP_START + HEAP_SIZE) )
+        if( (viraddr >= HEAP_START + (HEAP_SIZE>>1) ) && (viraddr < HEAP_START + HEAP_SIZE) )
+        {
             phyaddr = hbmem_get_pages(1);
+            LOG_INFO("allocate in HBW\n");
+        }
         else
+        {
 		    phyaddr = expect_zeroed_pages ? get_zeroed_page() : get_page();
+            LOG_INFO("allocate in DDR4\n");
+        }
 
 		if (BUILTIN_EXPECT(!phyaddr, 0)) {
 			LOG_ERROR("out of memory: task = %u\n", task->id);

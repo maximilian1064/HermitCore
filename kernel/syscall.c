@@ -286,7 +286,7 @@ ssize_t sys_sbrk(ssize_t incr)
 	ret = heap->end;
 
 	// check heapp boundaries
-	if ((heap->end >= HEAP_START) && (heap->end+incr < HEAP_START + HEAP_SIZE>>1)) {
+	if ((heap->end >= HEAP_START) && (heap->end+incr < HEAP_START + (HEAP_SIZE>>1) )) {
 		heap->end += incr;
 
 		// reserve VMA regions
@@ -322,7 +322,7 @@ ssize_t sys_hbmem_sbrk(ssize_t incr)
 	ret = hbmem_heap->end;
 
 	// check hbmem_heapp boundaries
-	if ((hbmem_heap->end >= HEAP_START + HEAP_SIZE>>1) && (hbmem_heap->end+incr < HEAP_START + HEAP_SIZE)) {
+	if ((hbmem_heap->end >= HEAP_START + (HEAP_SIZE>>1) ) && (hbmem_heap->end+incr < HEAP_START + HEAP_SIZE)) {
 		hbmem_heap->end += incr;
 
 		// reserve VMA regions
