@@ -286,7 +286,7 @@ ssize_t sys_sbrk(ssize_t incr)
 	ret = heap->end;
 
 	// check heapp boundaries
-	if ((heap->end >= HEAP_START) && (heap->end+incr < HEAP_START + HEAP_SIZE)) {
+	if ((heap->end >= HEAP_START) && (heap->end+incr < HEAP_START + HEAP_SIZE>>1)) {
 		heap->end += incr;
 
 		// reserve VMA regions
@@ -302,6 +302,42 @@ ssize_t sys_sbrk(ssize_t incr)
 	// is catched by the pagefault handler
 
 	spinlock_unlock(&heap_lock);
+
+	return ret;
+}
+
+ssize_t sys_hbmem_sbrk(ssize_t incr)
+{
+	ssize_t ret;
+	vma_t* hbmem_heap = per_core(current_task)->hbmem_heap;
+	static spinlock_t hbmem_heap_lock = SPINLOCK_INIT;
+
+	if (BUILTIN_EXPECT(!hbmem_heap, 0)) {
+		LOG_ERROR("sys_sbrk: missing hbmem_heap!\n");
+		do_abort();
+	}
+
+	spinlock_lock(&hbmem_heap_lock);
+
+	ret = hbmem_heap->end;
+
+	// check hbmem_heapp boundaries
+	if ((hbmem_heap->end >= HEAP_START + HEAP_SIZE>>1) && (hbmem_heap->end+incr < HEAP_START + HEAP_SIZE)) {
+		hbmem_heap->end += incr;
+
+		// reserve VMA regions
+		if (PAGE_CEIL(hbmem_heap->end) > PAGE_CEIL(ret)) {
+			// region is already reserved for the hbmem_heap, we have to change the
+			// property
+			vma_free(PAGE_CEIL(ret), PAGE_FLOOR(hbmem_heap->end));
+			vma_add(PAGE_CEIL(ret), PAGE_FLOOR(hbmem_heap->end), VMA_HEAP|VMA_USER);
+		}
+	} else ret = -ENOMEM;
+
+	// allocation and mapping of new pages for the hbmem_heap
+	// is catched by the pagefault handler
+
+	spinlock_unlock(&hbmem_heap_lock);
 
 	return ret;
 }

@@ -54,8 +54,8 @@ volatile uint32_t go_down = 0;
  * A task's id will be its position in this array.
  */
 static task_t task_table[MAX_TASKS] = { \
-        [0]                 = {0, TASK_IDLE, 0, NULL, NULL, NULL, TASK_DEFAULT_FLAGS, 0, 0, 0, 0, NULL, 0, NULL, NULL, 0, 0, 0, NULL, FPU_STATE_INIT}, \
-        [1 ... MAX_TASKS-1] = {0, TASK_INVALID, 0, NULL, NULL, NULL, TASK_DEFAULT_FLAGS, 0, 0, 0, 0, NULL, 0, NULL, NULL, 0, 0, 0, NULL, FPU_STATE_INIT}};
+        [0]                 = {0, TASK_IDLE, 0, NULL, NULL, NULL, TASK_DEFAULT_FLAGS, 0, 0, 0, 0, NULL, NULL, 0, NULL, NULL, 0, 0, 0, NULL, FPU_STATE_INIT}, \
+        [1 ... MAX_TASKS-1] = {0, TASK_INVALID, 0, NULL, NULL, NULL, TASK_DEFAULT_FLAGS, 0, 0, 0, 0, NULL, NULL, 0, NULL, NULL, 0, 0, 0, NULL, FPU_STATE_INIT}};
 
 static spinlock_irqsave_t table_lock = SPINLOCK_IRQSAVE_INIT;
 
@@ -310,6 +310,7 @@ int set_idle_task(void)
 			set_per_core(kernel_stack, task_table[i].stack + KERNEL_STACK_SIZE - 0x10);
 			task_table[i].prio = IDLE_PRIO;
 			task_table[i].heap = NULL;
+            task_table[i].hbmem_heap = NULL;
 			readyqueues[core_id].idle = task_table+i;
 			set_per_core(current_task, readyqueues[core_id].idle);
 			arch_init_task(task_table+i);
@@ -342,9 +343,11 @@ void finish_task_switch(void)
 				old->stack = NULL;
 			}
 
-			if (!old->parent && old->heap) {
+			if (!old->parent && old->heap && old->hbmem_heap) {
 				kfree(old->heap);
+				kfree(old->hbmem_heap);
 				old->heap = NULL;
+				old->hbmem_heap = NULL;
 			}
 
 			if (old->ist_addr) {
@@ -487,7 +490,8 @@ int clone_task(tid_t* id, entry_point_t ep, void* arg, uint8_t prio)
 			task_table[i].stack = stack;
 			task_table[i].prio = prio;
 			task_table[i].heap = curr_task->heap;
-			task_table[i].start_tick = get_clock_tick();
+			task_table[i].hbmem_heap = curr_task->hbmem_heap;
+            task_table[i].start_tick = get_clock_tick();
 			task_table[i].last_tsc = 0;
 			task_table[i].parent = curr_task->id;
 			task_table[i].tls_addr = curr_task->tls_addr;
@@ -589,6 +593,7 @@ int create_task(tid_t* id, entry_point_t ep, void* arg, uint8_t prio, uint32_t c
 			task_table[i].stack = stack;
 			task_table[i].prio = prio;
 			task_table[i].heap = NULL;
+			task_table[i].hbmem_heap = NULL;
 			task_table[i].start_tick = get_clock_tick();
 			task_table[i].last_tsc = 0;
 			task_table[i].parent = 0;

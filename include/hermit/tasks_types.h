@@ -95,6 +95,8 @@ typedef struct task {
 	uint64_t		last_tsc;
 	/// the userspace heap
 	vma_t*			heap;
+	/// HBW heap part
+	vma_t*			hbmem_heap;
 	/// parent thread
 	tid_t			parent;
 	/// next task in the queue

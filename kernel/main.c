@@ -323,6 +323,7 @@ static int initd(void* arg)
 	struct sockaddr_in6 server, client;
 	task_t* curr_task = per_core(current_task);
 	size_t heap = HEAP_START;
+    size_t hbmem_heap = HEAP_START + HEAP_SIZE >> 1;
 	int argc, envc;
 	char** argv = NULL;
 	char **environ = NULL;
@@ -335,20 +336,39 @@ static int initd(void* arg)
 	// setup heap
 	if (!curr_task->heap)
 		curr_task->heap = (vma_t*) kmalloc(sizeof(vma_t));
+	if (!curr_task->hbmem_heap)
+		curr_task->hbmem_heap = (vma_t*) kmalloc(sizeof(vma_t));
 
 	if (BUILTIN_EXPECT(!curr_task->heap, 0)) {
 		LOG_ERROR("load_task: heap is missing!\n");
 		return -ENOMEM;
 	}
+	if (BUILTIN_EXPECT(!curr_task->hbmem_heap, 0)) {
+		LOG_ERROR("load_task: hbmem_heap is missing!\n");
+		return -ENOMEM;
+	}
+
 
 	curr_task->heap->flags = VMA_HEAP|VMA_USER;
 	curr_task->heap->start = PAGE_CEIL(heap);
 	curr_task->heap->end = PAGE_CEIL(heap);
 
+	curr_task->hbmem_heap->flags = VMA_HEAP|VMA_USER;
+	curr_task->hbmem_heap->start = PAGE_FLOOR(hbmem_heap);
+	curr_task->hbmem_heap->end = PAGE_FLOOR(hbmem_heap);
+
+
 	// region is already reserved for the heap, we have to change the
 	// property of the first page
 	vma_free(curr_task->heap->start, curr_task->heap->start+PAGE_SIZE);
 	vma_add(curr_task->heap->start, curr_task->heap->start+PAGE_SIZE, VMA_HEAP|VMA_USER);
+
+	vma_free(curr_task->hbmem_heap->start, curr_task->hbmem_heap->start+PAGE_SIZE);
+	vma_add(curr_task->hbmem_heap->start, curr_task->hbmem_heap->start+PAGE_SIZE, VMA_HEAP|VMA_USER);
+
+
+	//create_kernel_task(NULL, foo, "foo1", NORMAL_PRIO);
+	//create_kernel_task(NULL, foo, "foo2", NORMAL_PRIO);
 
 	// initialize network
 	err = init_netifs();

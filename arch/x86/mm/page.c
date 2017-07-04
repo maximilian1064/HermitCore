@@ -33,7 +33,7 @@
  *
  * @author Steffen Vogel <steffen.vogel@rwth-aachen.de>
  */
-
+#include <hermit/stddef.h>
 #include <hermit/stdio.h>
 #include <hermit/memory.h>
 #include <hermit/errno.h>
@@ -269,8 +269,12 @@ void page_fault_handler(struct state *s)
 
 		 // on demand userspace heap mapping
 		viraddr &= PAGE_MASK;
+        size_t phyaddr;
+        if( (viraddr >= HEAP_START + HEAP_SIZE>>1) && (viraddr < HEAP_START + HEAP_SIZE) )
+            phyaddr = hbmem_get_pages(1);
+        else
+		    phyaddr = expect_zeroed_pages ? get_zeroed_page() : get_page();
 
-		size_t phyaddr = expect_zeroed_pages ? get_zeroed_page() : get_page();
 		if (BUILTIN_EXPECT(!phyaddr, 0)) {
 			LOG_ERROR("out of memory: task = %u\n", task->id);
 			goto default_handler;
@@ -307,6 +311,9 @@ default_handler:
 		s->rax, s->rbx, s->rcx, s->rdx, s->rbp, s->rsp, s->rdi, s->rsi, s->r8, s->r9, s->r10, s->r11, s->r12, s->r13, s->r14, s->r15);
 	if (task->heap)
 		LOG_ERROR("Heap 0x%llx - 0x%llx\n", task->heap->start, task->heap->end);
+	if (task->hbmem_heap)
+		LOG_ERROR("HBW Heap 0x%llx - 0x%llx\n", task->hbmem_heap->start, task->hbmem_heap->end);
+
 
 	apic_eoi(s->int_no);
 	//do_abort();

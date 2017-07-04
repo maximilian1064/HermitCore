@@ -74,6 +74,7 @@ void NORETURN sys_exit(int arg);
 ssize_t sys_read(int fd, char* buf, size_t len);
 ssize_t sys_write(int fd, const char* buf, size_t len);
 ssize_t sys_sbrk(ssize_t incr);
+ssize_t sys_hbmem_sbrk(ssize_t incr);
 int sys_open(const char* name, int flags, int mode);
 int sys_close(int fd);
 void sys_msleep(unsigned int ms);
@@ -131,6 +132,7 @@ int setcontext(ucontext_t *ucp);
 #define __NR_clone		27
 #define __NR_sem_cancelablewait	28
 #define __NR_get_ticks		29
+#define __NR_hbmem_sbrk     30
 
 #ifndef __KERNEL__
 inline static long
