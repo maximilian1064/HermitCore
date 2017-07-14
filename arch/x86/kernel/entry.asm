@@ -46,6 +46,7 @@ _start:
     jmp start64
 
 align 4
+    extern __bss_start
     global base
     global limit
     global cpu_freq
@@ -134,6 +135,16 @@ start64:
     ; store pointer to the multiboot information
     mov [mb_info], QWORD rdx
 
+    ; reserve memory to emulate hbmem
+    mov QWORD [hbmem_size], 0xA00000
+    mov rax, QWORD [base]
+    add rax, QWORD [limit]
+    sub rax, QWORD [hbmem_size]
+    mov QWORD [hbmem_base], rax
+    mov rax, QWORD [limit]
+    sub rax, QWORD [hbmem_size]
+    mov QWORD [limit], rax
+
     ; relocate page tables
     mov rdi, boot_pml4
     mov rax, QWORD [rdi]
@@ -198,6 +209,35 @@ Lremap:
     jnb Lno_pml4_init
     cmp rcx, QWORD [image_size]
     jb Lremap
+
+    ; do we have hbmem?
+    mov rdi, QWORD [hbmem_base]
+    cmp rdi, 0
+    je Lno_pml4_init
+
+    ; map bss to hbmem
+    mov rdi, __bss_start
+    add rdi, 0x1FFFFF ; align to 2 MB boundary
+    shr rdi, 18       ; (edi >> 21) * 8 (index for boot_pgd)
+    add rdi, boot_pgd
+    mov rax, QWORD [hbmem_base]
+    or rax, 0xA3      ; PG_GLOBAL isn't required because HermitCore is a single-address space OS
+    xor rcx, rcx
+    mov rbx, __bss_start
+    add rbx, 0x1FFFFF ; align to 2 MB boundary
+    and rbx, ~0x1FFFFF
+    mov rsi, 510*0x200000
+    sub rsi, rbx
+Lremap2:
+    mov QWORD [rdi], rax
+    add rax, 0x200000
+    add rcx, 0x200000
+    add rdi, 8
+    ; note: the whole code segement muust fit in the first pgd
+    cmp rcx, rsi
+    jnb Lno_pml4_init
+    cmp rcx, QWORD [image_size]
+    jb Lremap2
 
 Lno_pml4_init:
     ; Set CR3
