@@ -136,14 +136,12 @@ start64:
     mov [mb_info], QWORD rdx
 
     ; reserve memory to emulate hbmem
-    mov QWORD [hbmem_size], 0xA00000
-    mov rax, QWORD [base]
-    add rax, QWORD [limit]
+    mov QWORD [hbmem_size], 0x20000000
+    ; mov rax, QWORD [base]
+    mov rax, QWORD [limit]
     sub rax, QWORD [hbmem_size]
     mov QWORD [hbmem_base], rax
     mov rax, QWORD [limit]
-    sub rax, QWORD [hbmem_size]
-    mov QWORD [limit], rax
 
     ; relocate page tables
     mov rdi, boot_pml4
@@ -222,12 +220,16 @@ Lremap:
     add rdi, boot_pgd
     mov rax, QWORD [hbmem_base]
     or rax, 0xA3      ; PG_GLOBAL isn't required because HermitCore is a single-address space OS
-    xor rcx, rcx
+    ;xor rcx, rcx
     mov rbx, __bss_start
     add rbx, 0x1FFFFF ; align to 2 MB boundary
     and rbx, ~0x1FFFFF
+    mov rcx, rbx
     mov rsi, 510*0x200000
-    sub rsi, rbx
+    ;sub rsi, rbx
+    mov rbx, QWORD[image_size]
+    add rbx, kernel_start
+
 Lremap2:
     mov QWORD [rdi], rax
     add rax, 0x200000
@@ -236,7 +238,8 @@ Lremap2:
     ; note: the whole code segement muust fit in the first pgd
     cmp rcx, rsi
     jnb Lno_pml4_init
-    cmp rcx, QWORD [image_size]
+    ;cmp rcx, QWORD [image_size]
+    cmp rcx, rbx
     jb Lremap2
 
 Lno_pml4_init:

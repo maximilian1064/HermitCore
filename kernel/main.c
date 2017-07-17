@@ -568,6 +568,14 @@ out:
 	return 0;
 }
 
+void hbw_bss_test(void)
+{
+    size_t page_start;
+    for(page_start=(size_t)&kernel_start; (page_start < ((size_t)&kernel_start + image_size)) && (page_start < ((size_t)&kernel_start + 0x8000000) ); page_start += 0x200000)
+        LOG_INFO("---- virtual addr 0x%zx mapped to physical addr 0x%zx\n", page_start, virt_to_phys(page_start));
+    return 0;
+}
+
 int hermit_main(void)
 {
 	hermit_init();
@@ -588,6 +596,7 @@ int hermit_main(void)
 	LOG_INFO("System is able to use %d processors\n", possible_cpus);
 	if (hbmem_base)
 		LOG_INFO("Found high bandwidth memory at 0x%zx (size 0x%zx)\n", hbmem_base, hbmem_size);
+    hbw_bss_test();
 
 #if 0
 	print_pci_adapters();
