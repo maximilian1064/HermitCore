@@ -354,8 +354,8 @@ static int initd(void* arg)
 	curr_task->heap->end = PAGE_CEIL(heap);
 
 	curr_task->hbmem_heap->flags = VMA_HEAP|VMA_USER;
-	curr_task->hbmem_heap->start = PAGE_FLOOR(hbmem_heap);
-	curr_task->hbmem_heap->end = PAGE_FLOOR(hbmem_heap);
+	curr_task->hbmem_heap->start = PAGE_CEIL(hbmem_heap);
+	curr_task->hbmem_heap->end = PAGE_CEIL(hbmem_heap);
 
 
 	// region is already reserved for the heap, we have to change the
